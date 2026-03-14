@@ -62,6 +62,7 @@ alias lla="ls -a"
 alias rm="rm -i"
 BASHRC
 source "$HOME/.bashrc"
+sudo cp "$HOME/.bashrc" /root/.bashrc 2>/dev/null || true
 
 # Optional: show which home is used
 echo "[prestart] HOME=$HOME, pwd=$(pwd)"
