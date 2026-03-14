@@ -11,10 +11,11 @@ set -euo pipefail
 cache_dir="${GITHUB_WORKSPACE:-$(pwd)}/.apt-cache"
 mkdir -p "$cache_dir/archives" "$cache_dir/lists"
 
-# Ensure the cache directory is writable by both the runner and the _apt user
-# (apt may run as _apt internally but the workflow runs as "runner").
-# Using 0777 avoids permission issues when writing the config file and caches.
-sudo chmod -R 0777 "$cache_dir"
+# Ensure the cache directory is writable by both the runner and the _apt user.
+# apt may run as _apt internally, so we set ownership and permissive mode.
+sudo mkdir -p "$cache_dir"
+sudo chown -R _apt:_apt "$cache_dir"
+sudo chmod -R 0775 "$cache_dir"
 
 cat > "$cache_dir/apt-cache.conf" <<EOF
 Dir::Cache::Archives "$cache_dir/archives";
