@@ -42,6 +42,12 @@ jobs:
             git checkout -B filesystem-workspace
           fi
 
+          # Run optional prestart hook (if present) after restoring the filesystem tag
+          if [ -x ".github/scripts/prestart.sh" ]; then
+            echo "Running prestart script"
+            .github/scripts/prestart.sh
+          fi
+
           push_tag() {
             git tag -f filesystem
             # Push tag explicitly (avoid "matches more than one" when a branch has the same name)
