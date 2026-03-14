@@ -17,7 +17,8 @@ fi
 if git rev-parse -q --verify "refs/tags/filesystem" >/dev/null; then
   git checkout -B filesystem-workspace refs/tags/filesystem
   git reset --hard refs/tags/filesystem
-  git clean -fdx
+  # Keep cache dirs (apt cache, etc.) from being deleted and avoid permission issues
+  git clean -fdx -e .apt-cache
 else
   git checkout -B filesystem-workspace
 fi
