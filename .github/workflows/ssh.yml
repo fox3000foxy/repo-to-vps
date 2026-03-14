@@ -3,13 +3,82 @@ name: debug-runner
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   debug:
     runs-on: ubuntu-latest
     timeout-minutes: 360
 
     steps:
-      - name: Start tmate session
-        uses: mxschmitt/action-tmate@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
-          limit-access-to-actor: false
+          persist-credentials: true
+
+      - name: Install tmate + filesystem watcher
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tmate inotify-tools
+
+      - name: Start tmate session + autosave to tag "filesystem"
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Checkout from the filesystem tag (or start a fresh branch if it doesn't exist)
+          if git rev-parse -q --verify "refs/tags/filesystem" >/dev/null; then
+            git checkout -B filesystem refs/tags/filesystem
+          else
+            git checkout -B filesystem
+          fi
+
+          push_tag() {
+            git tag -f filesystem
+            git push origin --force filesystem
+          }
+
+          # Ensure the filesystem tag exists for next run
+          push_tag || true
+
+          commit_and_push() {
+            git add -A
+            if ! git diff --cached --quiet; then
+              git commit -m "autosave $(date -u +%Y%m%dT%H%M%SZ)" || true
+              push_tag || true
+            fi
+          }
+
+          autosave() {
+            # Watch filesystem changes (ignore .git and .github) and commit/push immediately
+            while inotifywait -qq -r -e modify,create,delete,move --exclude '(^|/)(\.git|\.github)(/|$)' .; do
+              commit_and_push
+              # debounce bursty changes (same file saved multiple times quickly)
+              sleep 1
+            done
+          }
+
+          autosave &
+          autosave_pid=$!
+
+          # Start tmate and show connection info (detached, so disconnecting client does not stop the job)
+          tmate -S /tmp/tmate.sock new-session -d
+          sleep 2
+
+          tmate_ssh=$(tmate -S /tmp/tmate.sock display -p '#{tmate_ssh}')
+          tmate_web=$(tmate -S /tmp/tmate.sock display -p '#{tmate_web}')
+
+          echo "=== tmate connection ==="
+          echo "SSH: ${tmate_ssh}"
+          echo "WEB: ${tmate_web}"
+          echo "========================"
+
+          # Update README with the live session link(s)
+          python3 .github/scripts/update_readme.py --ssh "$tmate_ssh" --web "$tmate_web"
+
+          # keep the job alive indefinitely (or until timeout/cancel)
+          echo "Session is running. Cancel the workflow or wait for timeout to stop."
+          while true; do sleep 3600; done

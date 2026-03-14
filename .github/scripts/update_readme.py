@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+"""Update README.md with live tmate session links.
+
+This script is designed to be called from a GitHub Actions workflow.
+It inserts or updates a block between markers in README.md:
+
+<!-- TMATE-SESSION-START -->
+## Live tmate session
+
+- SSH: ...
+- Web: ...
+<!-- TMATE-SESSION-END -->
+
+Usage:
+  python update_readme.py --ssh <ssh-url> --web <web-url>
+
+If README.md does not exist, it is created with a default title.
+"""
+
+import argparse
+import re
+from pathlib import Path
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description="Update README with tmate session links")
+    parser.add_argument("--ssh", required=True, help="tmate ssh connection string")
+    parser.add_argument("--web", required=True, help="tmate web connection URL")
+    parser.add_argument("--readme", default="README.md", help="Path to README file")
+    args = parser.parse_args(argv)
+
+    path = Path(args.readme)
+    if not path.exists():
+        path.write_text("# Workspace\n")
+
+    text = path.read_text()
+    block = (
+        "<!-- TMATE-SESSION-START -->\n"
+        "## Live tmate session\n\n"
+        f"- SSH: {args.ssh}\n"
+        f"- Web: {args.web}\n"
+        "<!-- TMATE-SESSION-END -->"
+    )
+
+    if re.search(r"<!-- TMATE-SESSION-START -->.*?<!-- TMATE-SESSION-END -->", text, flags=re.S):
+        text = re.sub(
+            r"<!-- TMATE-SESSION-START -->.*?<!-- TMATE-SESSION-END -->",
+            block,
+            text,
+            flags=re.S,
+        )
+    else:
+        text = text + "\n" + block + "\n"
+
+    path.write_text(text)
+
+
+if __name__ == "__main__":
+    main()
