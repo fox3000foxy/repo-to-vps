@@ -12,6 +12,7 @@ jobs:
 
       - name: Reverse SSH
         run: |
-          ssh -o StrictHostKeyChecking=no \
-              -R 2222:localhost:22 \
-              serveo.net
+            sudo service ssh start
+            ssh -o StrictHostKeyChecking=no \
+                -R 0:localhost:22 \
+                serveo.net
