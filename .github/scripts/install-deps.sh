@@ -12,10 +12,9 @@ cache_dir="${GITHUB_WORKSPACE:-$(pwd)}/.apt-cache"
 mkdir -p "$cache_dir/archives" "$cache_dir/lists"
 
 # Ensure the cache directory is writable by both the runner and the _apt user.
-# apt may run as _apt internally, so we set ownership and permissive mode.
+# apt may run as _apt internally, so set open permissions (no need for specific group).
 sudo mkdir -p "$cache_dir"
-sudo chown -R _apt:_apt "$cache_dir"
-sudo chmod -R 0775 "$cache_dir"
+sudo chmod -R 0777 "$cache_dir"
 
 cat > "$cache_dir/apt-cache.conf" <<EOF
 Dir::Cache::Archives "$cache_dir/archives";
