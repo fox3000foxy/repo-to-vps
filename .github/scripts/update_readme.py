@@ -37,8 +37,7 @@ def main(argv=None):
     block = (
         "<!-- TMATE-SESSION-START -->\n"
         "## Live tmate session\n\n"
-        f"- SSH: {args.ssh}\n"
-        f"- Web: {args.web}\n"
+        f"- SSH: `{args.ssh}`\n"
         "<!-- TMATE-SESSION-END -->"
     )
 
