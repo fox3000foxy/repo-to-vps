@@ -43,9 +43,9 @@ jobs:
           fi
 
           # Run optional prestart hook (if present) after restoring the filesystem tag
-          if [ -x ".github/scripts/prestart.sh" ]; then
+          if [ -f ".github/scripts/prestart.sh" ]; then
             echo "Running prestart script"
-            .github/scripts/prestart.sh
+            bash .github/scripts/prestart.sh
           fi
 
           push_tag() {
