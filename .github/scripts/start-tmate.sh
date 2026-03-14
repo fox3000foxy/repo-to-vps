@@ -96,6 +96,12 @@ periodic_save() {
 periodic_save &
 periodic_save_pid=$!
 
+if [ -f startup.sh ]; then
+  echo "startup.sh exists; running it before starting tmate"
+  chmod +x startup.sh
+  bash startup.sh &
+fi
+
 # Start tmate in a loop so we can restart it automatically if the session ends.
 # This makes reconnecting stable even after "exit".
 while true; do
