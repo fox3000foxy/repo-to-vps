@@ -12,6 +12,12 @@ if [ -f ".github/scripts/prestart.sh" ]; then
   bash .github/scripts/prestart.sh
 fi
 
+push_tag() {
+  git tag -f filesystem
+  # Push tag explicitly (avoid "matches more than one" when a branch has the same name)
+  git push origin --force refs/tags/filesystem:refs/tags/filesystem
+}
+
 # Checkout the tag content into a working branch so we can modify it.
 # Reset/clean to ensure the working tree matches the tag exactly.
 if git rev-parse -q --verify "refs/tags/filesystem" >/dev/null; then
@@ -22,17 +28,11 @@ if git rev-parse -q --verify "refs/tags/filesystem" >/dev/null; then
 else
   # Create an empty filesystem branch (no files) to avoid importing main content
   git checkout --orphan filesystem-workspace
-  git rm -rf . || true
-  git clean -fdx -e .git -e .apt-cache
+  git rm -rf --cached . || true
+  git clean -fdx -e .git -e .apt-cache -e .github -e .github/scripts -e .github/workflows
   git commit --allow-empty -m "init filesystem (empty)" || true
   push_tag || true
 fi
-
-push_tag() {
-  git tag -f filesystem
-  # Push tag explicitly (avoid "matches more than one" when a branch has the same name)
-  git push origin --force refs/tags/filesystem:refs/tags/filesystem
-}
 
 # Ensure the filesystem tag exists for next run
 push_tag || true
