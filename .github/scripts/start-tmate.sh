@@ -120,14 +120,14 @@ RUN
   echo "=== tmate connection ==="
   echo "SSH: ${tmate_ssh}"
   echo "WEB: ${tmate_web}"
-  echo "RUN: curl -fsSL https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/filesystem/run.sh | sh"
+  echo "RUN: curl -fsSL https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/refs/tags/filesystem/run.sh | sh"
   echo "========================"
 
   # Update README with the live session link(s)
   python3 "$RUNNER_SCRIPTS_DIR/scripts/update_readme.py" \
     --ssh "$tmate_ssh" \
     --web "$tmate_web" \
-    --run-url "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/filesystem/run.sh"
+    --run-url "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/refs/tags/filesystem/run.sh"
 
   # Wait until tmate session is gone, then restart it
   while tmate -S /tmp/tmate.sock display -p '#{tmate_ssh}' >/dev/null 2>&1; do
