@@ -26,6 +26,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description="Update README with tmate session links")
     parser.add_argument("--ssh", required=True, help="tmate ssh connection string")
     parser.add_argument("--web", required=True, help="tmate web connection URL")
+    parser.add_argument("--run-url", required=False, help="Optional URL to a run.sh script for SSH access")
     parser.add_argument("--readme", default="README.md", help="Path to README file")
     args = parser.parse_args(argv)
 
@@ -38,6 +39,8 @@ def main(argv=None):
         "<!-- TMATE-SESSION-START -->\n"
         "## Live tmate session\n\n"
         f"- SSH: `{args.ssh}`\n"
+        f"- Web: `{args.web}`\n"
+        + (f"- Run: `curl -fsSL {args.run_url} | sh`\n" if args.run_url else "")
         "<!-- TMATE-SESSION-END -->"
     )
 
