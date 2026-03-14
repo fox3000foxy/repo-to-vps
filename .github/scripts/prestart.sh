@@ -50,17 +50,20 @@ cat > "$HOME/.bashrc" <<'BASHRC'
 user_display="${TMATE_USERNAME:-\u}"
 host_display="${TMATE_HOSTNAME:-\h}"
 
+# Ensure tmate commands use the correct socket (set by start-tmate.sh)
+export TMATE_SOCKET="/tmp/tmate.sock"
+
 if [ "$(id -u)" -eq 0 ]; then
   export PS1="\[\e[37;1m\][\[\e[31;1m\]${user_display}\[\e[37;1m\]@\[\e[34;1m\]${host_display}\[\e[0m\] \W\[\e[37;1m\]]\[\e[31;1m\]\$\[\e[0m\] "
 else
   export PS1="\[\e[37;1m\][\[\e[32;1m\]${user_display}\[\e[37;1m\]@\[\e[34;1m\]${host_display}\[\e[0m\] \W\[\e[37;1m\]]\[\e[0m\]\$ "
 fi
 
-# Make "exit" open a fresh shell window in the tmate session before closing.
-# This keeps the session alive and makes reconnecting behave like a new shell.
+# Make "exit" detach from the tmate session instead of killing it.
+# This allows reconnecting later without losing the session.
 exit() {
   if command -v tmate >/dev/null 2>&1; then
-    tmate new-window -n shell "bash --rcfile $HOME/.bashrc -i" >/dev/null 2>&1 || true
+    tmate detach 2>/dev/null || true
   fi
   builtin exit "$@"
 }
