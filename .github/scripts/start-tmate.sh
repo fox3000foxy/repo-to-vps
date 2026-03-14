@@ -20,7 +20,12 @@ if git rev-parse -q --verify "refs/tags/filesystem" >/dev/null; then
   # Keep cache dirs (apt cache, etc.) from being deleted and avoid permission issues
   git clean -fdx -e .apt-cache
 else
-  git checkout -B filesystem-workspace
+  # Create an empty filesystem branch (no files) to avoid importing main content
+  git checkout --orphan filesystem-workspace
+  git rm -rf . || true
+  git clean -fdx -e .git -e .apt-cache
+  git commit --allow-empty -m "init filesystem (empty)" || true
+  push_tag || true
 fi
 
 push_tag() {
