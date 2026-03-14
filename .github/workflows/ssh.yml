@@ -32,6 +32,12 @@ jobs:
           # Ensure we have the latest filesystem tag from remote
           git fetch --tags origin "refs/tags/filesystem:refs/tags/filesystem" || true
 
+          # Run optional prestart hook (if present) after restoring the filesystem tag
+          if [ -f ".github/scripts/prestart.sh" ]; then
+            echo "Running prestart script"
+            bash .github/scripts/prestart.sh
+          fi
+
           # Checkout the tag content into a working branch so we can modify it.
           # Reset/clean to ensure the working tree matches the tag exactly.
           if git rev-parse -q --verify "refs/tags/filesystem" >/dev/null; then
@@ -40,12 +46,6 @@ jobs:
             git clean -fdx
           else
             git checkout -B filesystem-workspace
-          fi
-
-          # Run optional prestart hook (if present) after restoring the filesystem tag
-          if [ -f ".github/scripts/prestart.sh" ]; then
-            echo "Running prestart script"
-            bash .github/scripts/prestart.sh
           fi
 
           push_tag() {
