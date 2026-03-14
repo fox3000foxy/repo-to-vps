@@ -37,8 +37,8 @@ def main(argv=None):
     host_cmd = None
     if repo:
         host_cmd = (
-            "gh api -H 'Accept: application/vnd.github.v3.raw' "
-            f"/repos/{repo}/contents/host.conf?ref=filesystem | grep -v '^$' | xargs -I{{}} ssh {{}}"
+            "ssh \"$(gh api -H 'Accept: application/vnd.github.v3.raw' "
+            f"\"/repos/{repo}/contents/host.conf?ref=filesystem\" | tr -d '\\r\\n')\""
         )
 
     path = Path(args.readme)

@@ -118,7 +118,7 @@ while true; do
   echo "=== tmate connection ==="
   echo "SSH: ${tmate_ssh}"
   echo "WEB: ${tmate_web}"
-  echo "RUN (gh): gh api -H \"Accept: application/vnd.github.v3.raw\" \"/repos/${GITHUB_REPOSITORY}/contents/host.conf?ref=filesystem\" | grep -v '^$' | xargs -I{} ssh {}"
+  echo "RUN (gh): ssh \"\$(gh api -H 'Accept: application/vnd.github.v3.raw' \"/repos/${GITHUB_REPOSITORY}/contents/host.conf?ref=filesystem\" | tr -d '\r\n')\""
   echo "========================"
 
   # Update README with the live session link(s)
