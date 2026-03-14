@@ -51,19 +51,35 @@ autosave() {
 }
 
 commit_and_push() {
-  # Add only non-hidden files (avoid committing runtime dotfiles like .bashrc, .apt-cache, etc.)
-  git add -A -- . ':(exclude).*'
-  # Still allow explicitly tracked hidden metadata if needed (e.g., .github workflows)
-  git add -A .github 2>/dev/null || true
+  # Use an exclusive lock so multiple autosave loops don't run the git commands concurrently.
+  (
+    flock -n 200 || return
 
-  if ! git diff --cached --quiet; then
-    git commit -m "autosave $(date -u +%Y%m%dT%H%M%SZ)" || true
-    push_tag || true
-  fi
+    # Add only non-hidden files (avoid committing runtime dotfiles like .bashrc, .apt-cache, etc.)
+    git add -A -- . ':(exclude).*'
+    # Still allow explicitly tracked hidden metadata if needed (e.g., .github workflows)
+    git add -A .github 2>/dev/null || true
+
+    if ! git diff --cached --quiet; then
+      git commit -m "autosave $(date -u +%Y%m%dT%H%M%SZ)" || true
+      push_tag || true
+    fi
+  ) 200>/tmp/tmate_autosave.lock
 }
 
 autosave &
 autosave_pid=$!
+
+periodic_save() {
+  while true; do
+    sleep 5
+    echo "[periodic autosave]"
+    commit_and_push
+  done
+}
+
+periodic_save &
+periodic_save_pid=$!
 
 # Start tmate using the prepared ~/.bashrc (detached, so disconnecting client does not stop the job)
 tmate -S /tmp/tmate.sock new-session -d "bash --rcfile $HOME/.bashrc -i"
