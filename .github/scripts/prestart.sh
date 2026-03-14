@@ -67,6 +67,11 @@ tmate-detach() {
   fi
 }
 
+exit() {
+    killall -9 -u "$(whoami)" tmate 2>/dev/null || true
+    builtin exit "$@"
+}
+
 alias ls="ls --color=auto"
 alias ll="ls -l"
 alias lla="ls -a"
