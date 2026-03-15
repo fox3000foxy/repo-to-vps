@@ -4,10 +4,8 @@ This repository turns a GitHub Actions workflow into an **interactive SSH server
 
 ## 🏁 Quick start (using this as a template)
 
-1. Click **Use this template** and create a **new private repo**.
-2. In your new repo, open the **Actions** tab.
-3. Select the **debug-runner** workflow and click **Run workflow** (no inputs required).
-4. Once the run starts, open the latest run and follow the tmate session links (the README will be updated automatically).
+1. Click **Use this template** and create a **new private repo**. This should trigger the workflow and start a tmate session (if not, trigger it manually from the Actions tab).
+2. Once the job starts, open the latest run and follow the tmate session links (the README will be updated automatically).
 
 > ⚠️ Recommended: keep the repo private, since this exposes an interactive shell on a GitHub runner.
 
