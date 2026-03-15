@@ -46,15 +46,17 @@ def main(argv=None):
         path.write_text("# Workspace\n")
 
     text = path.read_text()
-    block = (
 
-    )
+    block = ""
+    block += "<!-- TMATE-SESSION-START -->\n"
+    block += "## Live tmate session\n\n"
+    block += f"- SSH: `{args.ssh}`\n"
+    block += f"- Web: `{args.web}`\n"
 
     cmd = args.run_cmd or host_cmd
     if cmd:
         block += f"- Run: `{cmd}`\n"
 
-    if cmd:
         block += (
             "\n"
             "### Connect via GitHub CLI\n\n"
