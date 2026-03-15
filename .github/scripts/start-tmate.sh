@@ -1,51 +1,71 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# ---------------------------------------------------------------------------
+# Configuration
+# ---------------------------------------------------------------------------
+
 git config user.name "github-actions[bot]"
 git config user.email "github-actions[bot]@users.noreply.github.com"
 
-# The persistent state is stored on a dedicated branch named "filesystem".
-# Each run restores this branch into the working tree and pushes updates back.
-
+# Remote + persistent branch used to store the filesystem state.
 remote=${REMOTE:-origin}
+filesystem_branch="filesystem"
 
-# Fetch the remote filesystem branch (if it exists)
-git fetch "$remote" filesystem:refs/remotes/$remote/filesystem || true
-
-# Cache helper scripts so they remain available even if the filesystem branch is empty
+# Helper scripts are cached so they remain available even if the filesystem
+# branch is empty (or cleaned by git).
 RUNNER_SCRIPTS_DIR="/tmp/runner-scripts"
 rm -rf "$RUNNER_SCRIPTS_DIR"
 mkdir -p "$RUNNER_SCRIPTS_DIR"
 cp -r .github/scripts "$RUNNER_SCRIPTS_DIR/" 2>/dev/null || true
 
-# Run optional prestart hook (if present) after restoring the filesystem branch
+# Optional per-repo initialization hook.
 if [ -f ".github/scripts/prestart.sh" ]; then
   echo "Running prestart script"
   bash .github/scripts/prestart.sh
 fi
 
+# Make sure the remote filesystem branch exists locally (for fast checks).
+git fetch "$remote" "$filesystem_branch":refs/remotes/$remote/$filesystem_branch 2>/dev/null || true
+
+# ---------------------------------------------------------------------------
+# Git helpers
+# ---------------------------------------------------------------------------
+
 push_filesystem() {
-  # Push the current working branch into the remote "filesystem" branch
-  git push --force "$remote" "filesystem-workspace:filesystem" 2>/dev/null || true
+  # Push the current working branch into the remote filesystem branch.
+  git push --force "$remote" "filesystem-workspace:$filesystem_branch" 2>/dev/null || true
 }
 
-# Checkout the filesystem branch into a working branch so we can modify it.
-# Reset/clean to ensure the working tree matches the branch exactly.
-if git rev-parse -q --verify "refs/remotes/$remote/filesystem" >/dev/null; then
-  git checkout -B filesystem-workspace "refs/remotes/$remote/filesystem"
-  git reset --hard "refs/remotes/$remote/filesystem"
-  # Keep cache dirs (apt cache, etc.) from being deleted and avoid permission issues
-  git clean -fdx -e .apt-cache -e .cache -e host.conf -e tmate.sock
-else
-  # Create an empty filesystem branch (no files) to avoid importing main content
-  git checkout --orphan filesystem-workspace
-  git rm -rf --cached . || true
-  git clean -fdx -e .git -e .apt-cache -e .cache -e .github -e .github/scripts -e .github/workflows
-  git commit --allow-empty -m "init filesystem (empty)" || true
-  push_filesystem || true
-fi
+ensure_filesystem_branch() {
+  # Ensure the filesystem branch exists remotely (create it if missing).
+  if ! git ls-remote --exit-code "$remote" "refs/heads/$filesystem_branch" >/dev/null 2>&1; then
+    git checkout --orphan filesystem-workspace
+    git rm -rf --cached . || true
+    git clean -fdx -e .git -e .github -e .github/scripts -e .github/workflows -e .apt-cache -e .cache || true
+    git commit --allow-empty -m "init filesystem (empty)" || true
+    push_filesystem || true
+  fi
+}
 
-# Ensure the filesystem branch exists for next run
+sync_from_remote() {
+  # Fast-forward local workspace from the remote filesystem branch.
+  git fetch "$remote" "$filesystem_branch":refs/remotes/$remote/$filesystem_branch 2>/dev/null || true
+  git merge --ff-only "refs/remotes/$remote/$filesystem_branch" 2>/dev/null || true
+}
+
+# ---------------------------------------------------------------------------
+# Restore workspace from filesystem branch
+# ---------------------------------------------------------------------------
+
+ensure_filesystem_branch
+
+git checkout -B filesystem-workspace "refs/remotes/$remote/$filesystem_branch"
+git reset --hard "refs/remotes/$remote/$filesystem_branch"
+# Keep cache dirs (apt cache, etc.) from being deleted and avoid permission issues
+git clean -fdx -e .apt-cache -e .cache -e host.conf -e tmate.sock
+
+# Ensure the filesystem branch exists remotely for the next run
 push_filesystem || true
 
 autosave() {
@@ -63,10 +83,8 @@ commit_and_push() {
   (
     flock -n 200 || return
 
-    # Ensure we're up-to-date with any remote changes to filesystem before committing.
-    # (e.g. someone pushed new changes to the filesystem branch)
-    git fetch "$remote" filesystem:refs/remotes/$remote/filesystem 2>/dev/null || true
-    git merge --ff-only "refs/remotes/$remote/filesystem" 2>/dev/null || true
+    # Ensure we're up-to-date with any remote changes to filesystem.
+    sync_from_remote
 
     # Add all changes (respect .gitignore). Explicitly avoid committing workflow/script changes.
     git add -A
@@ -92,7 +110,7 @@ autosave_pid=$!
 periodic_save() {
   while true; do
     # Keep the local branch in sync with remote if it was updated elsewhere
-    git pull --ff-only "$remote" filesystem || true
+    sync_from_remote
     sleep 5
     echo "[periodic autosave]"
     commit_and_push
@@ -129,11 +147,11 @@ while true; do
 
   source "$HOME/.bashrc"
 
-  echo "=== tmate connection ==="
-  echo "SSH: ${tmate_ssh}"
-  echo "WEB: ${tmate_web}"
-  echo "RUN (gh): ssh \"\$(gh api -H 'Accept: application/vnd.github.v3.raw' \"/repos/${GITHUB_REPOSITORY}/contents/host.conf?ref=filesystem\" | tr -d '\r\n')\""
-  echo "========================"
+  # echo "=== tmate connection ==="
+  # echo "SSH: ${tmate_ssh}"
+  # echo "WEB: ${tmate_web}"
+  # echo "RUN (gh): ssh \"\$(gh api -H 'Accept: application/vnd.github.v3.raw' \"/repos/${GITHUB_REPOSITORY}/contents/host.conf?ref=filesystem\" | tr -d '\r\n')\""
+  # echo "========================"
 
   # Update README with the live session link(s)
   python3 "$RUNNER_SCRIPTS_DIR/scripts/update_readme.py" \

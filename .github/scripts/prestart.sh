@@ -16,48 +16,16 @@
 
 set -euo pipefail
 
-# Create a consistent bash prompt + useful aliases
-# (Only overwrite if we didn't already set it; this helps sessions start faster.)
+# Ensure the remote session has a consistent shell environment.
+# The core prompt/aliases are stored in a separate file (remote_bashrc) so updates
+# can be made without editing this hook.
 if ! grep -q "Custom prompt and aliases for remote sessions" "$HOME/.bashrc" 2>/dev/null; then
-  cat > "$HOME/.bashrc" <<'BASHRC'
-user_display="${USER:-$(whoami)}"
-host_display="$(hostname -s)"
-# Custom prompt and aliases for remote sessions (uses params.json values if present)
-
-# Ensure tmate commands use the correct socket (set by start-tmate.sh)
-export TMATE_SOCKET="/tmp/tmate.sock"
-
-if [ "$(id -u)" -eq 0 ]; then
-  export PS1="\[\e[37;1m\][\[\e[31;1m\]${user_display}\[\e[37;1m\]@\[\e[34;1m\]${host_display}\[\e[0m\] \W\[\e[37;1m\]]\[\e[31;1m\]\$\[\e[0m\] "
-else
-  export PS1="\[\e[37;1m\][\[\e[32;1m\]${user_display}\[\e[37;1m\]@\[\e[34;1m\]${host_display}\[\e[0m\] \W\[\e[37;1m\]]\[\e[0m\]\$ "
-fi
-
-# Provide a helper to detach from the tmate session without exiting the shell.
-# Users can run "tmate-detach" instead of "exit" if they want to keep the session alive.
-tmate-detach() {
-  if command -v tmate >/dev/null 2>&1; then
-    tmate detach 2>/dev/null || true
-  fi
-}
-
-# Ensure Ctrl+D triggers the same cleanup path as running "exit".
-# This avoids leaving orphaned tmate processes when the shell exits via EOF.
-bind -x '"\C-d": "exit"'
-
-exit() {
-    killall -9 -u "$(whoami)" tmate 2>/dev/null || true
-    builtin exit "$@"
-}
-
-alias ls="ls --color=auto"
-alias ll="ls -l"
-alias lla="ls -a"
-alias rm="rm -i"
-BASHRC
+  cp .github/scripts/remote_bashrc "$HOME/.bashrc" 2>/dev/null || true
 fi
 
 source "$HOME/.bashrc"
+
+# Keep root's bashrc in sync for convenience when using sudo.
 sudo cp "$HOME/.bashrc" /root/.bashrc 2>/dev/null || true
 
 # Optional: show which home is used
