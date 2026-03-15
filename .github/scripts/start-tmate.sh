@@ -87,6 +87,7 @@ autosave_pid=$!
 
 periodic_save() {
   while true; do
+    git pull
     sleep 5
     echo "[periodic autosave]"
     commit_and_push

@@ -2,9 +2,16 @@ name: debug-runner
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 permissions:
   contents: write
+
+concurrency:
+  group: debug-runner-main
+  cancel-in-progress: true
 
 jobs:
   debug:
