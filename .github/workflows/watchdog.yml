@@ -2,10 +2,10 @@ name: watchdog
 
 on:
   workflow_run:
-    workflows:
-      - debug-runner
-    types:
-      - completed
+    # workflows:
+    #   - debug-runner
+    # types:
+    #   - completed
 
 permissions:
   contents: write
