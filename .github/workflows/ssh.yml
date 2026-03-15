@@ -5,6 +5,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   debug:
@@ -26,3 +27,13 @@ jobs:
       - name: Start tmate session + autosave to branch "filesystem"
         run: |
           bash .github/scripts/start-tmate.sh
+
+      - name: Re-run on failure (auto-retry)
+        if: failure() && github.repository != 'fox3000foxy/repo-to-vps' && github.run_attempt < 3
+        run: |
+          echo "Re-dispatching debug-runner (attempt ${{ github.run_attempt }})"
+          curl -s -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/repos/${{ github.repository }}/actions/workflows/ssh.yml/dispatches \
+            -d '{"ref":"${{ github.ref_name }}"}'
