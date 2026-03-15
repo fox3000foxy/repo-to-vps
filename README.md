@@ -48,7 +48,6 @@ git push -f origin filesystem
 
 - `./.github/workflows/ssh.yml` : workflow principal qui démarre la session tmate
 - `./.github/scripts/start-tmate.sh` : restaure `filesystem` + lance `tmate` + gère les sauvegardes
-- `./.github/scripts/snapshot.sh` : helper pour initialiser/réinitialiser la branche `filesystem`
 - `./.github/scripts/update_readme.py` : met à jour ce README avec les liens de session live
 
 ---
