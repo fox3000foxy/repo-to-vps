@@ -50,7 +50,7 @@ push_filesystem || true
 
 autosave() {
   # Watch filesystem changes (ignore Git metadata, caches and temporary session state) and commit/push immediately
-  while inotifywait -qq -r -e modify,create,delete,move --exclude '(^|/)(\.git|\.apt-cache|\.cache|host\.conf|tmate\.sock|\.gitignore)(/|$)' .; do
+  while inotifywait -qq -r -e modify,create,delete,move --exclude '(^|/)(\.git|\.apt-cache|\.cache|host\.conf|tmate\.sock|\.gitignore|\.txt\.swp)(/|$)' .; do
     echo "[autosave] change detected"
     commit_and_push
     # debounce bursty changes (same file saved multiple times quickly)
