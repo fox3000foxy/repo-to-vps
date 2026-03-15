@@ -133,11 +133,3 @@ while true; do
 
   echo "tmate session ended; restarting..."
 done
-
-# keep the job alive indefinitely (or until timeout/cancel)
-# Emit periodic output to avoid GitHub Actions idle-timeout killing the job.
-echo "Session is running. Cancel the workflow or wait for timeout to stop."
-while true; do
-  echo "[heartbeat] $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-  sleep 300
-done
