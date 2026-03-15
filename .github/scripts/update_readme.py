@@ -49,13 +49,13 @@ def main(argv=None):
 
     block = ""
     block += "<!-- TMATE-SESSION-START -->\n"
-    # block += "## Live tmate session\n\n"
-    # block += f"- SSH: `{args.ssh}`\n"
-    # block += f"- Web: `{args.web}`\n"
+    block += "## Live tmate session\n\n"
+    block += f"- SSH: `{args.ssh}`\n"
+    block += f"- Web: `{args.web}`\n"
 
     cmd = args.run_cmd or host_cmd
     if cmd:
-        # block += f"- Run: `{cmd}`\n"
+        block += f"- Run: `{cmd}`\n"
 
         block += (
             "\n"

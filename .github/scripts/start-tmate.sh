@@ -111,14 +111,13 @@ while true; do
   tmate -S /tmp/tmate.sock set-option -g remain-on-exit on
 
   # Wait for tmate to generate session URLs (can take a short moment)
-  until tmate -S /tmp/tmate.sock display -p '#{tmate_ssh}' >/dev/null 2>&1; do
+  until tmate_ssh=$(tmate -S /tmp/tmate.sock display -p '#{tmate_ssh}') && [ -n "$tmate_ssh" ]; do
     sleep 0.2
   done
 
-  tmate_ssh=$(tmate -S /tmp/tmate.sock display -p '#{tmate_ssh}')
-  tmate_web=$(tmate -S /tmp/tmate.sock display -p '#{tmate_web}')
-
-  # Write a helper script that contains only the host string (username@host).
+  until tmate_web=$(tmate -S /tmp/tmate.sock display -p '#{tmate_web}') && [ -n "$tmate_web" ]; do
+    sleep 0.2
+  done
 
   # Also write a host.conf file containing only the host string, so it can be fetched via gh api.
   printf '%s' "${tmate_ssh#ssh }" > host.conf
